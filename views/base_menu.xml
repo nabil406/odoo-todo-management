@@ -8,10 +8,9 @@
 
     <!--    NavBar    -->
     <menuitem
-            id="menu_todo_tasks"
-            name="All Tasks"
+            id="todo_menu"
+            name="TO DO"
             parent="todo_root_menu"
-            action="action_todo_task"
     />
 
 </odoo>

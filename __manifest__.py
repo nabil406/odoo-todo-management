@@ -7,8 +7,9 @@
     "application": True,
     "data": [
         'security/ir.model.access.csv',
-        'views/todo_view.xml',
-        'views/base_menu.xml'
+        'views/base_menu.xml',
+        'views/todo_task_view.xml',
+        'reports/todo_task_report_action.xml'
     ],
     'assets': {
         'web.assets_backend': [

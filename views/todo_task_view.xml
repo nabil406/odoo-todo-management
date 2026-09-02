@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- List View -->
+    <record id="todo_task_view_list" model="ir.ui.view">
+        <field name="name">todo task list</field>
+        <field name="model">todo.task</field>
+        <field name="arch" type="xml">
+            <list class="header_custom" decoration-danger="is_late == True">
+                <field name="name"/>
+                <field name="user_id"/>
+                <field name="due_date"/>
+                <field name="estimated_time"/>
+                <field name="total_time"/>
+                <!-- حقل مطلوب لقراءة شرط التلوين decoration-danger في Odoo 18 -->
+                <field name="is_late" invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="todo_task_view_form" model="ir.ui.view">
+        <field name="name">todo task form</field>
+        <field name="model">todo.task</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <!-- 1. أثناء حالة New: البدء في المهمة -->
+                    <button name="action_in_progress"
+                            type="object"
+                            class="btn-primary"
+                            string="Start Task"
+                            invisible="state != 'new'"/>
+
+                    <!-- 2. أثناء حالة In Progress: إنهاء المهمة -->
+                    <button name="action_completed"
+                            type="object"
+                            class="btn-primary"
+                            string="Mark as Done"
+                            invisible="state != 'in_progress'"/>
+
+                    <!-- 3. زر إعادة التعيين (Reset): يظهر للمهام المكتملة أو المغلقة -->
+                    <button name="action_new"
+                            type="object"
+                            class="btn-secondary"
+                            string="Reset to New"
+                            invisible="state not in ('completed', 'closed')"/>
+
+                    <!-- الـ Statusbar -->
+                    <field name="state"
+                           widget="statusbar"
+                           statusbar_visible="new,in_progress,completed,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" placeholder="Task Name..."/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="user_id"/>
+                            <field name="due_date"/>
+                            <field name="active" invisible="1"/>
+                            <field name="estimated_time"/>
+                            <field name="total_time" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="description"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <!-- تبويب سطور التايم شيت Timesheets -->
+                        <page string="Timesheet Lines">
+                            <field name="line_ids">
+                                <list editable="bottom">
+                                    <field name="date"/>
+                                    <field name="description"/>
+                                    <field name="time" sum="Total Time"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="todo_task_view_search" model="ir.ui.view">
+        <field name="name">todo task search</field>
+        <field name="model">todo.task</field>
+        <field name="arch" type="xml">
+            <search>
+                <!-- Search Fields -->
+                <field name="name"/>
+                <field name="user_id"/>
+                <!-- Filters -->
+                <filter string="New" name="filter_new" domain="[('state','=','new')]"/>
+                <filter string="In Progress" name="filter_in_progress" domain="[('state','=','in_progress')]"/>
+                <filter string="Completed" name="filter_completed" domain="[('state','=','completed')]"/>
+                <filter string="Closed" name="filter_closed" domain="[('state','=','closed')]"/>
+                <separator/>
+                <!-- Group By -->
+                <filter string="Assigned To" name="group_user" context="{'group_by': 'user_id'}"/>
+                <filter string="Status" name="group_state" context="{'group_by': 'state'}"/>
+                <filter string="Due Date" name="group_due_date" context="{'group_by': 'due_date'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Server Action -->
+    <record id="todo_task_action_server_closed" model="ir.actions.server">
+        <field name="name">Closed</field>
+        <field name="model_id" ref="model_todo_task"/>
+        <field name="binding_model_id" ref="model_todo_task"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">
+            records.action_closed()
+        </field>
+    </record>
+
+    <!-- Cron Job -->
+    <record id="check_late_tasks_cron" model="ir.cron">
+        <field name="name">Todo: Check Late Tasks</field>
+        <field name="model_id" ref="model_todo_task"/>
+        <field name="state">code</field>
+        <field name="code">model.check_late_tasks()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+<!--        <field name="numbercall">-1</field>-->
+        <field name="active">True</field>
+    </record>
+
+    <!-- Window Action -->
+    <record id="todo_task_action" model="ir.actions.act_window">
+        <field name="name">ToDo Task</field>
+        <field name="res_model">todo.task</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Menuitem -->
+    <menuitem
+            id="all_task_menu_item"
+            name="All Tasks"
+            parent="todo_menu"
+            action="todo_task_action"
+    />
+
+</odoo>
